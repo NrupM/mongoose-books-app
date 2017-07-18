@@ -1,14 +1,17 @@
 //book.js
-let mongoose = require('mongoose');
-let Schema = mongoose.Schema;
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 
-let BookSchema = new Schema ({
+var BookSchema = new Schema ({
   title: String,
-  author: String,
+  author: {
+    type: Schema.Types.ObjectId,
+    ref: 'Author'
+  },
   image: String,
   releaseDate: String
 });
 
-let Book = mongoose.model('Book', BookSchema);
+var Book = mongoose.model('Book', BookSchema);
 
 module.exports = Book;

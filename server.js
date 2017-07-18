@@ -8,14 +8,14 @@
 
 
 //require express in our app
-let express = require('express'),
+var express = require('express'),
     bodyParser = require('body-parser');
 
 //connect to db models //import models module
-let db = require('./models');
+var db = require('./models');
 
 // generate a new express app and call it 'app'
-let app = express();
+var app = express();
 
 // serve static files in public
 app.use(express.static('public'));
@@ -35,9 +35,12 @@ app.get('/', function (req, res) {
 // get all books
 app.get('/api/books', function (req, res) {
   // send all books as JSON response
-  db.Book.find(function(err, books){
-    if (err) { return console.log("index error: " + err);}
-    // send all books as JSON response
+  db.Book.find()
+  //populate fills in the author id with all the author data
+  .populate('author')
+//TODO what does .exec do?
+  .exec(function(err, books){
+    if (err) { return console.log('index error: ' + err); }
     res.json(books);
   });
 });
@@ -45,18 +48,37 @@ app.get('/api/books', function (req, res) {
 // get one book
 app.get('/api/books/:id', function (req, res) {
   // find one book by its id
-  db.Book.findOne({ _id: req.params.id}, function(err, data){
-    res.json(data);
-  });
+  var bookId = req.params.id;
+
+  db.Book.findById(bookId)
+    .populate('author')
+    .exec(function(err, books){
+      if (err) { return console.log("index error: " + err); }
+      res.json(books);
+    });
 });
 
 //create new book
-app.get('/api/books/:id', function (req,res){
+app.post('/api/books', function (req,res){
   //create new book with form data (`req.body`)
   console.log('books create', req.body);
-  let newBook = new db.Book(req.body);
-  newBook.save(function handleDBBookSaved(err, savedBook){
-    res.json(savedBook);
+  var newBook = new db.Book({
+    title: req.body.title,
+    image: req.body.image,
+    releaseDate: req.body.releaseDate,
+  });
+
+  //this code will only add an author to a book if the author already exists
+  db.Author.findOne({name: req.body.author}, function (err, author){
+    newBook.author = author;
+    //add newBook to database
+    newBook.save(function (err, book){
+      if (err) {
+        return console.log("create error: " + err);
+      }
+      console.log("created ", book.title);
+      res.json(book);
+    });
   });
 });
 
@@ -64,7 +86,7 @@ app.get('/api/books/:id', function (req,res){
 // app.put('/api/books/:id', function(req,res){
 // // get book id from url params (`req.params`)
 //   console.log('books update', req.params);
-//   let bookId = req.params.id;
+//   var bookId = req.params.id;
 //   // find the index of the book we want to remove
 //   db.Book.findOne( { _id: bookId }, function (err, foundBook){
 //     foundBook.title = req.body.title;
@@ -79,11 +101,11 @@ app.get('/api/books/:id', function (req,res){
 //   });
 // });
 
-// delete book
+// devare book
 app.delete('/api/books/:id', function (req, res) {
   // get book id from url params (`req.params`)
   console.log('books delete', req.params);
-  let bookId = req.params.id;
+  var bookId = req.params.id;
   // find the index of the book we want to remove
   db.Book.findOneAndRemove({ _id: bookId}, function (err, deletedBook){
     res.json(deletedBook);
