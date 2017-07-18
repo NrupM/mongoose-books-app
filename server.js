@@ -8,12 +8,14 @@
 
 
 //require express in our app
-var express = require('express'),
+let express = require('express'),
     bodyParser = require('body-parser');
-    db = require('./models'); //import models module
+
+//connect to db models //import models module
+let db = require('./models');
 
 // generate a new express app and call it 'app'
-var app = express();
+let app = express();
 
 // serve static files in public
 app.use(express.static('public'));
@@ -33,71 +35,55 @@ app.get('/', function (req, res) {
 // get all books
 app.get('/api/books', function (req, res) {
   // send all books as JSON response
-  db.Book.find({ _id: bookId }, function(err, allBooks){
-    if (err) {
-      console.log("index error: " + err);
-      res.sendStatus(500);
-    }
+  db.Book.find(function(err, books){
+    if (err) { return console.log("index error: " + err);}
     // send all books as JSON response
-    res.json(allBooks);
+    res.json(books);
   });
 });
 
 // get one book
 app.get('/api/books/:id', function (req, res) {
   // find one book by its id
-  var bookId = req.params.id;
-
-  db.Book.findOne({ _id: bookId}, function(err, foundBook){
-    res.json(foundBook);
+  db.Book.findOne({ _id: req.params.id}, function(err, data){
+    res.json(data);
   });
 });
 
 //create new book
 app.get('/api/books/:id', function (req,res){
-  //find one book by its id
-  var bookId = req.params.id;
-
-  db.Book.findOne({ _id: bookId }, function (err, foundBook){
-    res.json(foundBook);
-  });
-});
-
-//create new todo
-app.post('/api/books', function (req, res){
   //create new book with form data (`req.body`)
-  var newBook = new db.Book(req.body);
-
-  //save new book in db
-  newBook.save(function(err, savedBook){
+  console.log('books create', req.body);
+  let newBook = new db.Book(req.body);
+  newBook.save(function handleDBBookSaved(err, savedBook){
     res.json(savedBook);
   });
 });
 
-// update book
-app.put('/api/books/:id', function(req,res){
-// get book id from url params (`req.params`)
-  console.log('books update', req.params);
-  var bookId = req.params.id;
-  // find the index of the book we want to remove
-  db.Book.findOne( { _id: bookId }, function (err, foundBook){
-    foundBook.title = req.body.title;
-    foundBook.author = req.body.author;
-    foundBook.image = req.body.image;
-    foundBook.releaseDate = req.body.releaseDate;
-
-    //save updated book in db
-    foundBook.save(function (err, foundBook){
-      res.json(foundBook)
-    });
-  });
-});
+// // update book
+// app.put('/api/books/:id', function(req,res){
+// // get book id from url params (`req.params`)
+//   console.log('books update', req.params);
+//   let bookId = req.params.id;
+//   // find the index of the book we want to remove
+//   db.Book.findOne( { _id: bookId }, function (err, foundBook){
+//     foundBook.title = req.body.title;
+//     foundBook.author = req.body.author;
+//     foundBook.image = req.body.image;
+//     foundBook.releaseDate = req.body.releaseDate;
+//
+//     //save updated book in db
+//     foundBook.save(function (err, foundBook){
+//       res.json(foundBook)
+//     });
+//   });
+// });
 
 // delete book
 app.delete('/api/books/:id', function (req, res) {
   // get book id from url params (`req.params`)
   console.log('books delete', req.params);
-  var bookId = req.params.id;
+  let bookId = req.params.id;
   // find the index of the book we want to remove
   db.Book.findOneAndRemove({ _id: bookId}, function (err, deletedBook){
     res.json(deletedBook);
